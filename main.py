@@ -1,34 +1,23 @@
-from fastapi import FastAPI, Path
-from typing import Optional
-from pydantic import BaseModel
+import requests
+from bs4 import BeautifulSoup
 
-app = FastAPI()
-
-class Item(BaseModel):
-    name: str
-    price: float
-    brand: Optional[str] = None
-
-inventory = {
+data = []
+req = requests.get("https://www.viz.com/read/shonenjump/section/hot-series")
+soup = BeautifulSoup(req.content, 'html.parser')
+lit = soup.find_all("a", class_="disp-bl color-white o_chapters-link")
+for i in lit:
+    link = i["href"]
+    image = i.find("img")["src"]
+    titleDiv = i.find("div", class_ = "pad-x-rg pad-t-rg pad-b-sm type-sm type-rg--sm type-md--lg type-center line-solid")
+    title = titleDiv.getText().strip()
+    dic = {
+        "link": link,
+        "img": image,
+        "title": title
+    }
+    data.append(dic)
     
-}
+print (data)
 
 
-@app.get("/get-item/{item_id}")
-def get_item(item_id: int = Path(description="The ID")):
-    return inventory[item_id]
-
-
-@app.get("/get-by-name")
-def get_item(*, name: Optional[str] = None):
-    for item_id in inventory:
-        if inventory[item_id].name == name:
-            return inventory[item_id]
-    return {"Data": "Not found"}
-
-@app.post("/create-item/{item_id}")
-def create_item(item_id: int, item: Item):
-    if item_id in inventory:
-        return {"Error": "Item ID alreayd exists"}
-    inventory[item_id] = item
-    return inventory[item_id]
+# chapter class = o_inner-link pad-x-rg pad-y-sm mar-b-rg type-bs type-sm--sm type-rg--lg type-center line-solid hover-bg-dark-red color-white
